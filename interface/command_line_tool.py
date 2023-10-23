@@ -388,6 +388,12 @@ class CommandLineInterface(object):
             X2 = dt[1]
             Y = dt[2]
 
+            # Check if X1 and X2 are non-empty
+            if X1 is None or len(X1) == 0 or X2 is None or len(X2) == 0:
+                print(f"Warning: Data for {dt_name} is empty. Skipping prediction.")
+                continue
+
+            # Predict
             Y_pred = new_model.predict(X1, X2)
             Y_pred = Y_pred.flatten()
 

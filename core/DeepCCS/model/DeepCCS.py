@@ -22,12 +22,18 @@
 
 import logging
 import numpy as np
+import tensorflow as tf
 from keras.models import load_model, save_model
 from .encoders import SmilesToOneHotEncoder, AdductToOneHotEncoder
 from keras.layers import Dense, Dropout, Flatten, Input, Concatenate, Embedding
 from keras.layers import Conv1D, MaxPooling1D, Activation, BatchNormalization, Flatten
 import keras
 from keras.models import Model
+
+from tensorflow.keras.models import load_model, save_model
+from tensorflow.keras.layers import (Dense, Dropout, Flatten, Input, Concatenate, Embedding,
+                                     Conv1D, MaxPooling1D, Activation, BatchNormalization)
+from tensorflow.keras.models import Model
 
 
 class DeepCCSModel(object):
@@ -94,9 +100,15 @@ class DeepCCSModel(object):
 
         output = Dense(1, activation="linear")(previous)
 
-        opt = getattr(keras.optimizers, 'adam')
-        opt = opt(lr=0.0001)
-        model = Model(input=[smile_input_layer, adduct_input_layer], outputs=output)
+
+        opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
+
+        # opt = getattr(tf.keras.optimizers, 'adam')
+        # opt = opt(lr=0.0001)
+
+        # model = Model(input=[smile_input_layer, adduct_input_layer], outputs=output)
+        model = Model(inputs=[smile_input_layer, adduct_input_layer], outputs=output)
+
         model.compile(optimizer=opt, loss='mean_squared_error')
 
         self.model = model
@@ -104,6 +116,24 @@ class DeepCCSModel(object):
     def train_model(self, X1_train, X2_train, Y_train, X1_valid, X2_valid, Y_valid, model_checkpoint, nbr_epochs,
                     verbose):
 
+        # Ensure data types are float32
+        X1_train = X1_train.astype(np.float32)
+        X2_train = X2_train.astype(np.float32)
+        Y_train = Y_train.astype(np.float32)
+        X1_valid = X1_valid.astype(np.float32)
+        X2_valid = X2_valid.astype(np.float32)
+        Y_valid = Y_valid.astype(np.float32)
+
+        # Check for NaN or Inf values
+        for dataset, name in [(X1_train, "X1_train"), (X2_train, "X2_train"), (Y_train, "Y_train"),
+                            (X1_valid, "X1_valid"), (X2_valid, "X2_valid"), (Y_valid, "Y_valid")]:
+            if np.isnan(dataset).any():
+                print(f"{name} contains NaN values.")
+            if np.isinf(dataset).any():
+                print(f"{name} contains Inf values.")
+
+        # Fit the model
         self.model.fit([X1_train, X2_train], Y_train, epochs=nbr_epochs, batch_size=2,
-                       validation_data=([X1_valid, X2_valid], Y_valid), verbose=verbose, callbacks=[model_checkpoint])
+                    validation_data=([X1_valid, X2_valid], Y_valid), verbose=verbose, callbacks=[model_checkpoint])
         self._is_fit = True
+

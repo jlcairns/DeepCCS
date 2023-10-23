@@ -33,7 +33,14 @@ class SMILESsplitter:
         :return: A list of chemical symbol/character ordered as
         """
         splitted_smiles = []
+        # print(len(smiles))
         for j, k in enumerate(smiles):
+            # Convert integer to string if k is an integer
+            if isinstance(k, int):
+                # print(smiles)
+                # continue
+                k = str(k)
+            
             if j == 0:
                 if k.isupper() and smiles[j + 1].islower() and smiles[j + 1] != "c":
                     splitted_smiles.append(k + smiles[j + 1])
@@ -46,7 +53,6 @@ class SMILESsplitter:
                     pass
                 else:
                     splitted_smiles.append(k)
-
             elif j == len(smiles) - 1:
                 if k.islower() and smiles[j - 1].isupper() and k != "c":
                     pass
